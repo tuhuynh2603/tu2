@@ -1,0 +1,209 @@
+
+	bEnable_EncapManus = FALSE;
+	nThreshMin_EncapManus = 140;
+	nThreshMax_EncapManus = 255;
+	nThreshMin_Black_EncapManus=0;
+	nThreshMax_Black_EncapManus=35;
+	nThreshMin_White_EncapManus=220;
+	nThreshMax_White_EncapManus=255;
+
+
+	hRect_DeviceLocationEncap_magnus = CRect(100,100,400,400);
+	hRect_EncapLocation_magnus = CRect(100, 100, 400, 400);
+	hRect_CropSmoothEncap_magnus = CRect(100, 100, 400, 400);	
+	hRect_CropNoSmoothEncap_magnus = CRect(100, 100, 400, 400);
+	
+
+
+	nDilateX_EncapManus = 1;
+	nDilateY_EncapManus = 10;
+
+	nOpeningX_EncapManus = 10;
+	nOpeningY_EncapManus = 1;
+	nValue_OpeningCircle_magnus = 10;
+	nCrop_Smooth_EncapManus = 30;
+	nValue_Smooth_EncapMagnus = 75;
+	nArea_Object_EncapManus = 999999;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	else if (nTeachStep == 14)
+	{
+
+		// get Two Point Encap Location////////
+
+		int nThresh_Min_magnus = pTrainingData->nThreshMin_EncapManus;
+		int nThresh_Max_magnus = pTrainingData->nThreshMax_EncapManus;
+		int nArea_Object_magnus = pTrainingData->nArea_Object_EncapManus;
+		HRegion hThreshold_Region_magnus;
+		HObject hDeviceLocation_magnus, hSelect_DeviceLocation_magnus;
+		HTuple hDefectInfo_magnus;
+
+		Threshold(hImages, &hThreshold_Region_magnus, nThresh_Min_magnus, nThresh_Max_magnus);
+		Connection(hThreshold_Region_magnus, &hDeviceLocation_magnus);
+		SelectShape(hDeviceLocation_magnus, &hSelect_DeviceLocation_magnus, "area", "and", nArea_Object_magnus, 9999999);
+		HRegion hSelect_DeviceLocation_obj_magnus;
+		SelectObj(hSelect_DeviceLocation_magnus, &hSelect_DeviceLocation_obj_magnus, 1);
+
+		HRegion hBoundary_DeviceLocation_magnus;
+		Boundary(hSelect_DeviceLocation_magnus, &hBoundary_DeviceLocation_magnus, "inner");
+		HTuple hRows_Device_magnus, hCols_Device_magnus;
+		GetRegionPoints(hBoundary_DeviceLocation_magnus, &hRows_Device_magnus, &hCols_Device_magnus);
+
+		HTuple  nbottom_DeviceLocationEncap_magnus,
+			ntop_DeviceLocationEncap_magnus,
+			nright_DeviceLocationEncap_magnus,
+			nleft_DeviceLocationEncap_magnus;
+		TupleMax(hRows_Device_magnus, &nbottom_DeviceLocationEncap_magnus);
+		TupleMin(hRows_Device_magnus, &ntop_DeviceLocationEncap_magnus);
+		TupleMax(hCols_Device_magnus, &ntop_DeviceLocationEncap_magnus);
+		TupleMin(hCols_Device_magnus, &ntop_DeviceLocationEncap_magnus);
+
+		pTrainingData->hRect_DeviceLocationEncap_magnus = CRect((int) nleft_DeviceLocationEncap_magnus,
+																(int) ntop_DeviceLocationEncap_magnus,
+																(int) nright_DeviceLocationEncap_magnus,
+																(int) nbottom_DeviceLocationEncap_magnus);
+
+
+
+		//////////// Get rectangle encap bottom//////////////////
+		if (true)
+		{
+			pTrainingData->hRect_EncapLocation_magnus.bottom = pTrainingData->hRect_DeviceLocationEncap_magnus.top;
+			pTrainingData->hRect_CropSmoothEncap_magnus = pTrainingData->hRect_EncapLocation_magnus;
+			pTrainingData->hRect_CropSmoothEncap_magnus.top = pTrainingData->hRect_CropSmoothEncap_magnus.bottom + pTrainingData->nCrop_Smooth_EncapManus;
+			pTrainingData->hRect_CropNoSmoothEncap_magnus = pTrainingData->hRect_EncapLocation_magnus;
+			pTrainingData->hRect_CropNoSmoothEncap_magnus.bottom = pTrainingData->hRect_CropNoSmoothEncap_magnus.bottom - pTrainingData->nCrop_Smooth_EncapManus;
+		}
+		else if (false)
+		{
+			pTrainingData->hRect_EncapLocation_magnus.top = pTrainingData->hRect_DeviceLocationEncap_magnus.bottom;
+			pTrainingData->hRect_CropSmoothEncap_magnus = pTrainingData->hRect_EncapLocation_magnus;
+			pTrainingData->hRect_CropSmoothEncap_magnus.bottom = pTrainingData->hRect_CropSmoothEncap_magnus.top + pTrainingData->nCrop_Smooth_EncapManus;
+			pTrainingData->hRect_CropNoSmoothEncap_magnus = pTrainingData->hRect_EncapLocation_magnus;
+			pTrainingData->hRect_CropNoSmoothEncap_magnus.top = pTrainingData->hRect_CropNoSmoothEncap_magnus.top + pTrainingData->nCrop_Smooth_EncapManus;
+		}
+	}
+	else if (nTeachStep == 15)
+	{
+		CRect hRect_EncapLocation_magnus = pTrainingData->hRect_EncapLocation_magnus;
+		HObject hRectangle_DeviceLocation_magnus;
+		GenRectangle1(&hRectangle_DeviceLocation_magnus,
+			hRect_EncapLocation_magnus.top,
+			hRect_EncapLocation_magnus.left,
+			hRect_EncapLocation_magnus.bottom,
+			hRect_EncapLocation_magnus.right);
+		HImage hCrop_image_magnus;
+		ReduceDomain(hImages, hRectangle_DeviceLocation_magnus, &hCrop_image_magnus);
+
+		/////////// Threshold white and black region///////////////
+
+		HRegion hBlack_Region_magnus, hWhite_Region_magnus;
+		int nThreshMin_Black_magnus = pTrainingData->nThreshMin_Black_EncapManus;
+		int nThreshMax_Black_magnus = pTrainingData->nThreshMax_Black_EncapManus;
+		int nThreshMin_White_magnus = pTrainingData->nThreshMin_White_EncapManus;
+		int nThreshMax_White_magnus = pTrainingData->nThreshMax_White_EncapManus;
+		Threshold(hCrop_image_magnus, &hBlack_Region_magnus, nThreshMin_Black_magnus, nThreshMax_Black_magnus);
+		Threshold(hCrop_image_magnus, &hWhite_Region_magnus, nThreshMin_White_magnus, nThreshMax_White_magnus);
+
+		/////////// Dilate White Region to remove intersection line between black and white region ///////////
+
+		HRegion hDilation_WhiteRegion_magnus;
+		int nX_Dilation_White_magnus = pTrainingData->nDilateX_EncapManus;
+		int nY_Dilation_White_magnus = pTrainingData->nDilateY_EncapManus;
+		DilationRectangle1(hWhite_Region_magnus, &hDilation_WhiteRegion_magnus, nX_Dilation_White_magnus, nY_Dilation_White_magnus);
+
+		/////////// Union White and Black region//////////////
+
+		HRegion hUnionRegion_WhiteBlack_magnus;
+		Union2(hBlack_Region_magnus, hDilation_WhiteRegion_magnus, &hUnionRegion_WhiteBlack_magnus);
+		int nShapeAreaRemove_magnus = pTrainingData->nArea_Object_EncapManus;
+		HRegion hSelectRegion_BW_magnus;
+		SelectShape(hUnionRegion_WhiteBlack_magnus, &hSelectRegion_BW_magnus, "width", "and", 400, 99999);
+		HRegion hFillupRegion_BW_magnus;
+		FillUp(hSelectRegion_BW_magnus, &hFillupRegion_BW_magnus);
+		HRegion hDiffRegion_magnus;
+
+		////////// Remove White and black region /////////////
+
+		Difference(hRectangle_DeviceLocation_magnus, hFillupRegion_BW_magnus, &hDiffRegion_magnus);
+		HRegion hFillupRegion_diff_magnus;
+		FillUp(hDiffRegion_magnus, &hFillupRegion_diff_magnus);
+		HRegion hRegionOpening_fill_magnus;
+
+		//////////////Remove top black line ( filter)
+
+		int nX_Opening_fill_magnus = pTrainingData->nOpeningX_EncapManus;
+		int nY_Opening_fill_magnus = pTrainingData->nOpeningY_EncapManus;
+		OpeningRectangle1(hFillupRegion_diff_magnus, &hRegionOpening_fill_magnus, nX_Opening_fill_magnus, nY_Opening_fill_magnus);
+
+		///////////////////////////////// Select shape////////
+
+		HRegion hConnection_opening_magnus, hRegionOpening_Select_magnus, hRegionOpening_Circle_magnus;
+		int nValueOpening_Circle_magnus = pTrainingData->nValue_OpeningCircle_magnus;
+		Connection(hRegionOpening_fill_magnus, &hConnection_opening_magnus);
+		SelectShape(hConnection_opening_magnus, &hRegionOpening_Select_magnus, "width", "and", 400, 9999);
+		OpeningCircle(hRegionOpening_Select_magnus, &hRegionOpening_Circle_magnus, nValueOpening_Circle_magnus);
+		//////////////////// gen contour and smooth////////////////
+
+		HXLD hContour_Encap_magnus, hContourSmooth_Encap_magnus;
+		int nValueSmooth_Crop_magnus = pTrainingData->nValue_Smooth_EncapMagnus;
+		GenContourRegionXld(hRegionOpening_Circle_magnus, &hContour_Encap_magnus, "center");
+		SmoothContoursXld(hContour_Encap_magnus, &hContourSmooth_Encap_magnus, 2 * nValueSmooth_Crop_magnus + 1);
+
+	//////////////////// gen Crop smooth contour to intersection/////////////
+
+	HXLD hCropContour_Smooth_magnus;
+	HRegion hRegionContour_Smooth_magnus;
+	CRect hRect_CropSmoothEncap_magnus = pTrainingData->hRect_CropSmoothEncap_magnus;
+	CropContoursXld(hContourSmooth_Encap_magnus, &hContourSmooth_Encap_magnus,
+		hRect_CropSmoothEncap_magnus.top,
+		hRect_CropSmoothEncap_magnus.left,
+		hRect_CropSmoothEncap_magnus.bottom,
+		hRect_CropSmoothEncap_magnus.right, "true");
+	
+	/////// Gen region smooth and intersection
+	
+	GenRegionContourXld(hContourSmooth_Encap_magnus, &hRegionContour_Smooth_magnus, "filled");
+	HRegion hRegionInter_CropSmooth_magnus;
+	Intersection(hRegionContour_Smooth_magnus, hRegionOpening_Circle_magnus, &hRegionInter_CropSmooth_magnus);
+
+	//////////////////////// union 2 region //////////
+	
+	HRegion hRegionRectangle_CropSmooth_magnus;
+	CRect hRect_CropNoSmoothEncap_magnus = pTrainingData->hRect_CropNoSmoothEncap_magnus;
+	GenRectangle1(&hRegionRectangle_CropSmooth_magnus,
+		hRect_CropNoSmoothEncap_magnus.top,
+		hRect_CropNoSmoothEncap_magnus.left,
+		hRect_CropNoSmoothEncap_magnus.bottom,
+		hRect_CropNoSmoothEncap_magnus.right);
+	HRegion hRegionInter_Opening_magnus, hRegionUnion_2RegionSmooth_magnus, hRegionBoundary_2Region_Smooth_magnus;
+	Intersection(hRegionOpening_Circle_magnus, hRegionRectangle_CropSmooth_magnus, &hRegionInter_Opening_magnus);
+	Union2(hRegionInter_Opening_magnus, hRegionInter_CropSmooth_magnus, &hRegionUnion_2RegionSmooth_magnus);
+	Boundary(hRegionUnion_2RegionSmooth_magnus, &hRegionBoundary_2Region_Smooth_magnus, "inner");
+    }

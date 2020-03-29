@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="13.0.2.2">
+<procedure name="main">
+<interface/>
+<body>
+<l>dev_close_window ()</l>
+<l>dev_open_window (0, 0, 512, 512, 'black', WD)</l>
+<l>image_dir:='E:/cong viec 09 03 2020/library/fci til 12 pm data/fci til 12 pm data/DUMMYSA/FAIL/'</l>
+<l>read_image (image, image_dir+ 2720815333+'/HP_FCI_THA1_Pos4_T2.bmp')</l>
+<l>gen_rectangle1 (ROI_0, 386.438, 663.813, 392.313, 678.438)</l>
+<l>reduce_domain (image, ROI_0, roi_sample)</l>
+<l>create_shape_model (roi_sample, 'auto', -0.39, 0.79, 'auto', 'auto', 'use_polarity', 'auto', 'auto', ModelID)</l>
+<l>find_shape_model (image, ModelID, 0, rad(360), 0.8, 0, 0.8, 'least_squares', 0, 0.9, Row, Column, Angle, Score)</l>
+<l> dev_clear_window()</l>
+<l> dev_display (image)</l>
+<l>* dev_display_shape_matching_results (ModelID, 'red', Row, Column, Angle, 1, 1, 0)</l>
+<l>for i:=2720815333 to 2720815350 by 1</l>
+<l>read_image (image, image_dir+ i+'/HP_FCI_THA1_Pos4_T2.bmp')</l>
+<l>get_image_size (image, Width, Height)</l>
+<l>get_first_region (image, roi_sample, ModelID)</l>
+<l>endfor</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="get_first_region">
+<interface>
+<io>
+<par name="image" base_type="iconic" dimension="0"/>
+<par name="roi_sample" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="ModelID1" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<c></c>
+<l>gauss_filter (image, ImageGauss, 9)</l>
+<l>threshold_sub_pix (ImageGauss, Border,40)</l>
+<l>threshold (ImageGauss, Region123, 128, 255)</l>
+<l>connection (Region123, Connection)</l>
+<l>closing_rectangle1 (Region123, RegionClosing,7, 3)</l>
+<l>connection (RegionClosing, ConnectedRegions)</l>
+<c></c>
+<l>select_shape (ConnectedRegions, region_large, 'area', 'and', 12000, 99999)</l>
+<l>select_shape (ConnectedRegions, Region_shapes, 'area', 'and', 5000, 99999)</l>
+<l>select_shape (Region_shapes, Region_shapes1, 'width', 'and', 5, 40)</l>
+<l>select_shape (Region_shapes1, Region_shapes2, 'height', 'and', 700, 900)</l>
+<l>count_obj (Region_shapes2, Number)</l>
+<l>dev_clear_window ()</l>
+<l>dev_display(image)</l>
+<l>dev_display(region_large)</l>
+<l>dev_display (Region_shapes2)</l>
+<c></c>
+<l>stop()</l>
+<l>for k:=0 to Number by 1</l>
+<l>    select_obj (Region_shapes2, ObjectSelected, 1)</l>
+<l>endfor</l>
+<c></c>
+<c></c>
+<l>select_contours_xld (Border, SelectedEdges, 'contour_length', 300, 99999, -0.2, 0.2)</l>
+<l>shape_trans_xld (SelectedEdges, XLD_line, 'convex')</l>
+<l>shape_trans_xld (SelectedEdges, XLDTrans, 'rectangle1')</l>
+<l>select_shape_xld (XLDTrans, SelectedXLD1, 'width', 'and', 15, 40)</l>
+<l>select_shape_xld (SelectedXLD1, SelectedXLD1, 'height', 'and', 600, 900)</l>
+<l>count_obj (SelectedXLD1, Number)</l>
+<c></c>
+<l>    for v := 1 to Number by 1</l>
+<l>      select_obj (SelectedXLD1, ObjectSelected, v)</l>
+<l>      select_contours_xld (ObjectSelected, SelectedContours, 'contour_length', 0.5, 200, -0.5, 0.5)</l>
+<l>      get_contour_xld (ObjectSelected, Row, Col)</l>
+<l>      comment_code ()</l>
+<l>    endfor</l>
+<c></c>
+<l>* find_shape_model (image, ModelID1, -0.39, 0.79, 0.5, 0, 0.5, 'least_squares', 0, 0.9, Row, Column, Angle, Score)</l>
+<l>* dev_display_shape_matching_results (ModelID1, 'red', Row, Column, Angle, 1, 1, 0)</l>
+<l>return ()</l>
+</body>
+<docu id="get_first_region">
+<parameters>
+<parameter id="ModelID1"/>
+<parameter id="image"/>
+<parameter id="roi_sample"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="train_proceduce">
+<interface>
+<io>
+<par name="image" base_type="iconic" dimension="0"/>
+<par name="roi_sample" base_type="iconic" dimension="0"/>
+</io>
+<oo>
+<par name="ImageGauss" base_type="iconic" dimension="0"/>
+<par name="Border" base_type="iconic" dimension="0"/>
+<par name="SelectedEdges" base_type="iconic" dimension="0"/>
+<par name="XLDTrans" base_type="iconic" dimension="0"/>
+<par name="SelectedXLD1" base_type="iconic" dimension="0"/>
+</oo>
+</interface>
+<body>
+<l>get_first_region (image, roi_sample1, ModelID1)</l>
+<l>return ()</l>
+</body>
+<docu id="train_proceduce">
+<parameters>
+<parameter id="Border"/>
+<parameter id="ImageGauss"/>
+<parameter id="SelectedEdges"/>
+<parameter id="SelectedXLD1"/>
+<parameter id="XLDTrans"/>
+<parameter id="image"/>
+<parameter id="roi_sample"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="comment_code">
+<interface/>
+<body>
+<l>      *Min_y:=Row[0]</l>
+<l>      *Min_x:=Col[0]</l>
+<l>*       tuple_min(Columns,Min_x)</l>
+<l>*       get_region_contour(ObjectSelected,Rows1, Columns1)</l>
+<l>*       orientation_region(ObjectSelected,Phi)</l>
+<l>      *dev_set_color ('green')</l>
+<l>      *dev_set_line_width (2)</l>
+<l>*       st:=' ' + '['+Min_x+ ' '+ Min_y+']'</l>
+<l>      *dev_set_draw ('margin')</l>
+<l>      *dev_display (ObjectSelected)</l>
+<l>      *dev_disp_text (st, 'window', 500,500, 'green', [], [])    </l>
+<l>return ()</l>
+</body>
+<docu id="comment_code">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

@@ -1,0 +1,25 @@
+	//////////Encap Magnus Teach parameter 
+
+	BOOL bEnable_EncapManus;
+	int nThreshMin_EncapManus;
+	int nThreshMax_EncapManus;
+
+	CRect hRect_DeviceLocationEncap_magnus;
+	CRect hRect_EncapLocation_magnus;
+	CRect hRect_CropSmoothEncap_magnus;
+	CRect hRect_CropNoSmoothEncap_magnus;
+
+	int nDilateX_EncapManus;
+	int nDilateY_EncapManus;
+
+	int nOpeningX_EncapManus;
+	int nOpeningY_EncapManus;
+	int nValue_OpeningCircle_magnus;
+	int nValue_Smooth_EncapMagnus;
+	int nArea_Object_EncapManus;
+	int nCrop_Smooth_EncapManus;
+	int nThreshMin_Black_EncapManus;
+	int nThreshMax_Black_EncapManus;
+	int nThreshMin_White_EncapManus;
+	int nThreshMax_White_EncapManus;
+	///////////////

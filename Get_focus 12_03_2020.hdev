@@ -3,56 +3,146 @@
 <procedure name="main">
 <interface/>
 <body>
-<c></c>
 <l>dev_close_window()</l>
 <l>dev_open_window(0,0,600,600,'black',WD)</l>
 <l>image_dir:='E:/cong viec 09 03 2020/OneDrive_2020-03-12/FCI 4X Grab Focus Image/Track0 Doc0 Fov0 - Focus '</l>
 <l>W:=2048</l>
 <l>H:=2048</l>
-<l>gen_rectangle1(ROI_0,W/2,H/6,W,4*H/5)</l>
+<l>gen_rectangle1(ROI_0,0,0,W,H)</l>
 <l>* gen_rectangle1(ROI_0,0,0,W,H)</l>
 <l>boundary (ROI_0,border_region,'inner')</l>
-<l>for k:=0 to 12 by 1</l>
+<l>max_index:=0</l>
+<l>max_value:=0</l>
+<l>mean_value:=0</l>
 <c></c>
-<l>    read_image (image, image_dir + k +'.bmp')</l>
-<l>    rgb1_to_gray(image,image)</l>
-<l>    gauss_filter(image, ImageGa, 3)</l>
-<l>    deviation_image (image, ImageDeviation,21, 11)</l>
-<l>    threshold(ImageDeviation,threshold_image,40,255)</l>
-<l>    connection (threshold_image, regions_img) </l>
-<l>    select_shape (regions_img, SelectedRegions, 'area', 'and', 16000, 99999)</l>
-<l>    select_shape(SelectedRegions, SelectedRegions1, 'height', 'and', 600, 750)</l>
-<l>    select_shape(SelectedRegions1, SelectedRegions2, 'width', 'and', 30, 100)</l>
-<l>    shape_trans(SelectedRegions2,RegionTrans, 'rectangle1')</l>
-<l>    sort_region(RegionTrans, SortedRegions, 'first_point', 'true', 'column')</l>
-<l>    area_center (SortedRegions, Area, Roww, Columnn)</l>
-<l>    count_obj (SortedRegions, Number)</l>
+<l>for i:=0 to 20 by 1</l>
+<l>    read_image (image, image_dir+ i+'.bmp')</l>
+<l>*     read_image (image, image_dir+ i+'/HP_FCI_THA1_Pos4_T2.bmp')</l>
+<l>    threshold (image, Region, 40, 255)</l>
+<l>    connection (Region, ConnectedRegions)</l>
+<l>    select_shape (ConnectedRegions, SelectedRegions3, 'width', 'and', 600, 1400)</l>
+<l>    select_shape (SelectedRegions3, SelectedRegions3, 'height', 'and', 600, 1400)</l>
+<l>    shape_trans (SelectedRegions3, RegionTrans1, 'rectangle1')</l>
+<l>    count_obj (RegionTrans1, Number1)</l>
+<l>    if (Number1==1)</l>
 <c>    </c>
-<l>    for v := 1 to Number by 1</l>
-<l>      dev_set_color ('red')</l>
-<l>      select_obj (SortedRegions, ObjectSelected, v)</l>
-<l>      get_region_polygon(ObjectSelected,4, Rows, Columns)</l>
-<l>      Min_y:=Rows[3]</l>
-<l>      Min_x:=Columns[3]</l>
-<l>      tuple_min(Columns,Min_x)</l>
-<l>      get_region_contour(ObjectSelected,Rows1, Columns1)</l>
-<l>      orientation_region(ObjectSelected,Phi)</l>
-<l>      set_tposition (WD, Roww[v - 1], Columnn[v - 1])</l>
-<l>      dev_set_color ('green')</l>
-<l>      dev_display (ObjectSelected)</l>
-<l>      dev_set_color ('white')</l>
-<l>      write_string (WD,' ' + '['+Min_x+ ' '+ Min_y+']')</l>
+<l>        get_region_contour (RegionTrans1, Rows2, Columns2)</l>
+<l>        tuple_max (Rows2, Max_Row)</l>
+<l>        tuple_max (Columns2, Max_Column)</l>
+<l>        tuple_min (Rows2,Min_Row)</l>
+<l>        tuple_min (Columns2, Min_Column)</l>
+<l>        gen_rectangle1(ROI_0,Min_Row,Min_Column,Max_Row,Max_Column)</l>
+<l>        boundary (ROI_0,border_region,'inner')</l>
+<l>        laplace (image, ImageLaplace, 'absolute',3, 'n_8')</l>
+<l>        intensity (ROI_0, ImageLaplace, Mean1, Deviation1)</l>
+<l>        mean_value:= mean_value+Mean1/21</l>
+<l>        mean_vector.at(i):=Mean1</l>
+<l>        if (Mean1&gt;max_value)</l>
+<l>            max_value:=Mean1</l>
+<l>            max_index:=i</l>
+<l>            copy_image (image,best_focus_image)      </l>
+<l>        endif</l>
+<l>        dev_clear_window ()</l>
+<l>        dev_display(image)</l>
+<l>        dev_display(border_region)</l>
+<l>        disp_message (WD,'image '+i+ ' : '+Mean1 ,'window',300,300,'black','true')</l>
+<l>    endif</l>
+<l>endfor</l>
+<l>dev_display(best_focus_image)</l>
+<l>disp_message (WD,'image '+max_index+ ' : '+max_value ,'window',300,300,'black','true')</l>
+<l>dev_display(border_region)</l>
+<l>stop()</l>
+<c></c>
+<l>index_vector:={}</l>
+<l>for k:=0 to  mean_vector.length()-1 by 1</l>
+<l>    if (mean_vector.at(k)&gt;mean_value)</l>
+<l>        index_vector.insert(max_index, k)</l>
+<l>        read_image (image, image_dir + k +'.bmp')</l>
+<l>        rgb1_to_gray(image,image)</l>
+<l>        gauss_filter(image, ImageGa, 3)</l>
+<l>        deviation_image (image, ImageDeviation,21, 11)</l>
+<l>        threshold(ImageDeviation,threshold_image,40,255)</l>
+<l>        connection (threshold_image, regions_img) </l>
+<l>        select_shape (regions_img, SelectedRegions, 'area', 'and', 16000, 99999)</l>
+<l>        select_shape(SelectedRegions, SelectedRegions1, 'height', 'and', 600, 750)</l>
+<l>        select_shape(SelectedRegions1, SelectedRegions2, 'width', 'and', 30, 100)</l>
+<l>        shape_trans(SelectedRegions2,RegionTrans, 'rectangle1')</l>
+<l>        sort_region(RegionTrans, SortedRegions, 'first_point', 'true', 'column')</l>
+<l>        area_center (SortedRegions, Area, Roww, Columnn)</l>
+<l>        count_obj (SortedRegions, Number)</l>
+<l>        dev_clear_window ()</l>
+<l>        for v := 1 to Number by 1</l>
+<l>          dev_set_color ('red')</l>
+<l>          select_obj (SortedRegions, ObjectSelected, v)</l>
+<l>          get_region_polygon(ObjectSelected,4, Rows, Columns)</l>
+<l>          Min_y:=Rows[3]</l>
+<l>          Min_x:=Columns[3]</l>
+<l>          tuple_min(Columns,Min_x)</l>
+<l>          get_region_contour(ObjectSelected,Rows1, Columns1)</l>
+<l>          orientation_region(ObjectSelected,Phi)</l>
+<l>          set_tposition (WD, Roww[v - 1], Columnn[v - 1])</l>
+<l>          dev_set_color ('green')</l>
+<l>          boundary (ObjectSelected, RegionBorder, 'inner')</l>
+<l>          dev_display (RegionBorder)</l>
+<l>          dev_set_color ('white')</l>
+<l>          write_string (WD,' ' + '['+Min_x+ ' '+ Min_y+']')  </l>
+<l>          dev_display(image)</l>
+<l>        endfor</l>
+<l>        boundary (RegionTrans, RegionBorder2, 'outer')     </l>
+<l>        comment_learning (RegionTrans, image, ImageGa, ImageDeviation, ImageLaplace, SelectedRegions, RegionTrans, ObjectSelected, ROI_0, W, H, WD, Phi, WD, Area, mean_value, Phi)</l>
+<l>    endif</l>
+<l>endfor</l>
+<c></c>
+<l>stop()</l>
+<c></c>
+<c></c>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="comment_learning">
+<interface>
+<io>
+<par name="RegionTrans" base_type="iconic" dimension="0"/>
+<par name="image" base_type="iconic" dimension="0"/>
+<par name="ImageGa" base_type="iconic" dimension="0"/>
+</io>
+<oo>
+<par name="ImageDeviation" base_type="iconic" dimension="0"/>
+<par name="ImageLaplace" base_type="iconic" dimension="0"/>
+<par name="SelectedRegions" base_type="iconic" dimension="0"/>
+<par name="RegionTransOut" base_type="iconic" dimension="0"/>
+<par name="ObjectSelected" base_type="iconic" dimension="0"/>
+<par name="ROI_0" base_type="iconic" dimension="0"/>
+</oo>
+<ic>
+<par name="W" base_type="ctrl" dimension="0"/>
+<par name="H" base_type="ctrl" dimension="0"/>
+<par name="WD" base_type="ctrl" dimension="0"/>
+<par name="Phi" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="WDOut" base_type="ctrl" dimension="0"/>
+<par name="Area" base_type="ctrl" dimension="0"/>
+<par name="mean_value" base_type="ctrl" dimension="0"/>
+<par name="PhiOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>* RegionOut := Region</l>
+<l>* RegionTransOut := RegionTrans</l>
+<l>* PhiOut := Phi</l>
+<l>* WDOut := WD</l>
 <c>      * Train Model</c>
 <c>      * Read multi file ( dont knew number file</c>
 <c>      * Github</c>
 <c>      * Some filter algorithm </c>
 <c>      * convert code to c++</c>
 <c>      * User interface with MFC</c>
-<c>      * Multithread Halcon</c>
-<l>    endfor</l>
-<l>    boundary (RegionTrans, RegionBorder2, 'outer')</l>
-<c>    </c>
-<l>*    dev_display(RegionTrans)</l>
+<c>      * Multithread Halcon    </c>
+<l>*         dev_display (RegionTransOut)</l>
 <l>*    crop_rectangle1 (image, ImagePart,W/2,H/6,W,4*H/5)</l>
 <l>*    dev_display(image)</l>
 <l>*    deviation_image (image, ImageDeviation, 3, 3)</l>
@@ -60,7 +150,7 @@
 <l>*    edges_image (ImageGa, ImaAmp, ImaDir, 'canny', 1, 'nms', 20, 50)</l>
 <l>*    detect_edge_segments (ImaAmp, 5, 32, 3, 10, BeginRow, BeginCol, EndRow, EndCol)</l>
 <l>*    dev_display(ImaDir)</l>
-<l>*    erosion_circle(Region,RegionErosion,5)</l>
+<l>*         erosion_circle (RegionOut, RegionErosion, 5)</l>
 <l>*    convert_image_type (image,image_complex,'complex')</l>
 <l>*    complex_to_real(image_complex,img_real, img_imaginary)</l>
 <l>*    dev_display(img_real)</l>
@@ -78,30 +168,30 @@
 <l>*    stop()</l>
 <c>    </c>
 <l>*    dev_set_draw('margin')</l>
-<l>*    draw_region (Regionss, WD)</l>
+<l>*         draw_region (Regionss, WDOut)</l>
 <l>*    shape_trans(Regionss,region_rec,'rectangle1')</l>
 <c>*     crop_rectangle1(image,crop_image,</c>
 <c>    </c>
 <l>*    reduce_domain (image, region_rec, region_draw)</l>
 <l>*     dev_display (region_draw)</l>
 <l>*    edges_sub_pix (region_draw, Edges, 'lanser2', 0.5, 20, 40)</l>
-<l>    dev_close_window()</l>
-<l>    dev_open_window(0,0,600,600,'black',WD)</l>
-<l>    set_display_font (WD,18,'sans','true','false')</l>
+<l>*     dev_close_window()</l>
+<l>*         dev_open_window (0, 0, 600, 600, 'black', WDOut)</l>
+<l>*         set_display_font (WDOut, 18, 'sans', 'true', 'false')</l>
 <c>    *laplace filter</c>
 <l>*    laplace (image, ImageLaplace, 'absolute', 3, 'n_4')</l>
 <c>    *threshold</c>
-<l>*    threshold (image, Region,100, 255)</l>
-<l>*    close_edges (Region, ImageLaplace, EdgesExtended, 100)</l>
+<l>*         threshold (image, RegionOut, 100, 255)</l>
+<l>*         close_edges (RegionOut, ImageLaplace, EdgesExtended, 100)</l>
 <c>    * get objects</c>
-<l>*    connection (Region, ConnectedRegions)</l>
+<l>*         connection (RegionOut, ConnectedRegions)</l>
 <c>    * select one object max area</c>
 <l>*    select_shape_std (ConnectedRegions, SelectedRegions, 'max_area', 2)</l>
 <c>    * transform area to special object ( circle, rectangle, convex</c>
-<l>*    shape_trans (SelectedRegions, RegionTrans, 'rectangle1')</l>
+<l>*         shape_trans (SelectedRegions, RegionTransOut, 'rectangle1')</l>
 <c>    *get center object : output= row,columns</c>
-<l>*    area_center (RegionTrans, Area, Row, Column)</l>
-<l>*    get_region_convex(RegionTrans,Row,Column)</l>
+<l>*         area_center (RegionTransOut, Area, Row, Column)</l>
+<l>*         get_region_convex (RegionTransOut, Row, Column)</l>
 <c>    *declare special object ( circle, rectangle1, rectangle2, ellipse,...</c>
 <l>*    gen_circle (Coin, Row, Column, 120)</l>
 <c>    * ~~~ similar crop image</c>
@@ -116,38 +206,35 @@
 <l>*    lines_facet(ImageLaplace,Lines,11,3,8,'light')</l>
 <l>*    select_obj(Lines, ObjectSelected, 1)</l>
 <l>*    measure_pairs (ImageLaplace,0.5 , 1, 30, 'all', 'all', RowEdgeFirst, ColumnEdgeFirst, AmplitudeFirst, RowEdgeSecond, ColumnEdgeSecond, AmplitudeSecond, IntraDistance, InterDistance)</l>
-<l>*    gen_rectangle2(ROI_0,Row,Cols,Phi,Length1,Length2)</l>
+<l>*         gen_rectangle2 (ROI_0, Row, Cols, PhiOut, Length1, Length2)</l>
 <l>*    reduce_domain(ImageLaplace,ROI_0,image_reduce)</l>
-<l>*    threshold(image_reduce,Region,100,255)</l>
+<l>*         threshold (image_reduce, RegionOut, 100, 255)</l>
 <l>*    dev_display(Lines)</l>
-<l>*    gray_histo(Region,ImageLaplace,AbsoluteHisto,RelativeHisto)</l>
-<l>*    get_lines_xld (Lines, BeginRow, BeginCol, EndRow, EndCol, Length, Phi)</l>
+<l>*         gray_histo (RegionOut, ImageLaplace, AbsoluteHisto, RelativeHisto)</l>
+<l>*         get_lines_xld (Lines, BeginRow, BeginCol, EndRow, EndCol, Length, PhiOut)</l>
 <l>*     inspect_shape_model (ImagePart, ModelImages, ModelRegions, 4, 30)</l>
-<l>endfor</l>
-<c></c>
-<l>stop()</l>
-<l>max_index:=0</l>
-<l>max_value:=0</l>
-<l>for i:=0 to 20 by 1</l>
-<l>    read_image (image, image_dir+ i+'.bmp')</l>
-<l>    laplace (image, ImageLaplace, 'absolute',3, 'n_8')</l>
-<l>    intensity (ROI_0, ImageLaplace, Mean1, Deviation1)</l>
-<l>    if (Mean1&gt;max_value)</l>
-<l>        max_value:=Mean1</l>
-<l>        max_index:=i</l>
-<l>        copy_image (image,best_focus_image)</l>
-<l>    endif</l>
-<l>    dev_display(image)</l>
-<l>    dev_display(border_region)</l>
-<l>    disp_message (WD,'image '+i+ ' : '+Mean1 ,'window',300,300,'black','true')</l>
-<l>endfor</l>
-<l>dev_display(best_focus_image)</l>
-<l>disp_message (WD,'image '+max_index+ ' : '+max_value ,'window',300,300,'black','true')</l>
-<l>dev_display(border_region)</l>
-<c></c>
+<l>return ()</l>
 </body>
-<docu id="main">
-<parameters/>
+<docu id="comment_learning">
+<parameters>
+<parameter id="Area"/>
+<parameter id="H"/>
+<parameter id="ImageDeviation"/>
+<parameter id="ImageGa"/>
+<parameter id="ImageLaplace"/>
+<parameter id="ObjectSelected"/>
+<parameter id="Phi"/>
+<parameter id="PhiOut"/>
+<parameter id="ROI_0"/>
+<parameter id="RegionTrans"/>
+<parameter id="RegionTransOut"/>
+<parameter id="SelectedRegions"/>
+<parameter id="W"/>
+<parameter id="WD"/>
+<parameter id="WDOut"/>
+<parameter id="image"/>
+<parameter id="mean_value"/>
+</parameters>
 </docu>
 </procedure>
 </hdevelop>
