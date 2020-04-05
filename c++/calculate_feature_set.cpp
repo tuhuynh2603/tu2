@@ -4,7 +4,6 @@
 
 
 
-
 #ifndef __APPLE__
 #  include "HalconCpp.h"
 #  include "HDevThread.h"
